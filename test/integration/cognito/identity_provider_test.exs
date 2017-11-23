@@ -3,6 +3,8 @@ defmodule ExAws.Integration.Cognito.IdentityProviderTest do
 
   alias ExAws.Cognito.IdentityProvider
 
+  @moduletag :integration
+
   @pool System.get_env("AWS_COGNITO_INTEGRATION_POOL") ||
           raise("AWS_COGNITO_INTEGRATION_POOL system env required")
 
