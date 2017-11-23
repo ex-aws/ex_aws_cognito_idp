@@ -403,17 +403,21 @@ defmodule ExAws.Cognito.IdentityProvider do
   end
 
   defp stream_builder(result_key, data, headers, config) do
-    Stream.unfold(%{}, fn acc ->
-      data = Map.merge(data, acc)
-      operation = ExAws.Operation.JSON.new(:"cognito-idp", data: data, headers: headers)
+    Stream.unfold(%{}, fn
+      :done ->
+        nil
 
-      case ExAws.request!(operation, config) do
-        %{^result_key => []} ->
-          nil
+      acc ->
+        data = Map.merge(data, acc)
+        operation = ExAws.Operation.JSON.new(:"cognito-idp", data: data, headers: headers)
 
-        %{"PaginationToken" => token, ^result_key => results} ->
-          {results, %{"PaginationToken" => token}}
-      end
+        case ExAws.request!(operation, config) do
+          %{"PaginationToken" => token, ^result_key => results} ->
+            {results, %{"PaginationToken" => token}}
+
+          %{^result_key => results} ->
+            {results, :done}
+        end
     end)
     |> Stream.flat_map(& &1)
   end

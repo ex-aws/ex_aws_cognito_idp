@@ -19,7 +19,9 @@ defmodule ExAws.Cognito.MixProject do
 
   defp deps do
     [
-      {:ex_aws, "~> 2.0"}
+      {:ex_aws, "~> 2.0"},
+      {:hackney, "~> 1.9", only: :test},
+      {:poison, ">= 1.2.0", only: :test},
     ]
   end
 end
