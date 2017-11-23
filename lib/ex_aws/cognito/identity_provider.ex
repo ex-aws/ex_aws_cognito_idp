@@ -12,7 +12,9 @@ defmodule ExAws.Cognito.IdentityProvider do
   @type op :: ExAws.Operation.JSON.t()
   @type attribute :: %{name: String.t(), value: String.t()}
 
-  @doc "Adds additional user attributes to the user pool schema."
+  @doc """
+  Adds additional user attributes to the user pool schema.
+  """
   @spec add_custom_attributes(user_pool_id, custom_attributes :: list) :: op
   def add_custom_attributes(user_pool_id, custom_attributes) do
     attributes = camelize_keys(custom_attributes, deep: true)
@@ -220,22 +222,22 @@ defmodule ExAws.Cognito.IdentityProvider do
 
   # TODO: admin_link_provider_for_user
 
-  # TODO: stream
-  # @doc "AdminListDevices"
-  # @type list_users_opts :: [
-  #         {:pagination_token, binary}
-  #         | {:limit, pos_integer}
-  #       ]
-  # @spec admin_list_devices(user_pool_id, username, list_devices_opts) :: op
-  # def admin_list_devices(user_pool_id, username, opts \\ %{}) do
-  #   data =
-  #     opts
-  #     |> Map.put(:user_pool_id, user_pool_id)
-  #     |> Map.put(:username, username)
-  #     |> camelize_keys
-  #     |> Map.merge(%{})
-  #   request("AdminListDevices", data)
-  # end
+  @doc """
+  Lists devices, as an administrator.
+
+  Requires developer credentials.
+
+  Can be used with `ExAws.stream!/2` to get all results.
+  """
+  @spec admin_list_devices(user_pool_id, username, limit: 0..60) :: op
+  def admin_list_devices(user_pool_id, username, opts \\ []) do
+    data =
+      opts
+      |> Enum.into(%{user_pool_id: user_pool_id, username: username})
+      |> camelize_keys()
+
+    stream("AdminListDevices", "Devices", data)
+  end
 
   # TODO: admin_list_groups_for_user
 
@@ -339,13 +341,17 @@ defmodule ExAws.Cognito.IdentityProvider do
   # TODO: list_user_import_jobs
   # TODO: list_user_pool_clients
 
-  @doc "ListUsers"
-
   @type list_users_opts :: [
-    attributes_to_get: [String.t()],
-    filter: String.t(),
-    limit: 0..60,
-  ]
+          attributes_to_get: [String.t()],
+          filter: String.t(),
+          limit: 0..60
+        ]
+
+  @doc """
+  Lists the users in the Amazon Cognito user pool.
+
+  Can be used with `ExAws.stream!/2` to get all results.
+  """
   @spec list_users(user_pool_id, list_users_opts) :: op
   def list_users(user_pool_id, opts \\ []) do
     data =
@@ -353,7 +359,7 @@ defmodule ExAws.Cognito.IdentityProvider do
       |> Enum.into(%{user_pool_id: user_pool_id})
       |> camelize_keys()
 
-    stream("ListUsers", data)
+    stream("ListUsers", "Users", data)
   end
 
   # TODO: list_users_in_group
@@ -382,7 +388,33 @@ defmodule ExAws.Cognito.IdentityProvider do
     ExAws.Operation.JSON.new(:"cognito-idp", data: data, headers: headers)
   end
 
-  defp stream(action, data) do
-    # TODO
+  defp stream(action, result_key, data) do
+    headers = [
+      {"x-amz-target", "#{@namespace}.#{action}"},
+      {"content-type", "application/x-amz-json-1.1"}
+    ]
+
+    ExAws.Operation.JSON.new(
+      :"cognito-idp",
+      data: data,
+      headers: headers,
+      stream_builder: &stream_builder(result_key, data, headers, &1)
+    )
+  end
+
+  defp stream_builder(result_key, data, headers, config) do
+    Stream.unfold(%{}, fn acc ->
+      data = Map.merge(data, acc)
+      operation = ExAws.Operation.JSON.new(:"cognito-idp", data: data, headers: headers)
+
+      case ExAws.request!(operation, config) do
+        %{^result_key => []} ->
+          nil
+
+        %{"PaginationToken" => token, ^result_key => results} ->
+          {results, %{"PaginationToken" => token}}
+      end
+    end)
+    |> Stream.flat_map(& &1)
   end
 end
