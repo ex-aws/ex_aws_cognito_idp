@@ -322,6 +322,14 @@ defmodule ExAws.Cognito.IdentityProvider do
   # TODO: describe_resource_server
   # TODO: describe_user_import_job
   # TODO: describe_user_pool
+
+  @spec describe_user_pool(user_pool_id) :: op
+  def describe_user_pool(user_pool_id) do
+    data = %{"UserPoolId" => user_pool_id}
+
+    request("DescribeUserPool", data)
+  end
+
   # TODO: describe_user_pool_client
   # TODO: describe_user_pool_domain
   # TODO: forget_device
