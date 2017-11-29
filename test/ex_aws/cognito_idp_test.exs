@@ -1,7 +1,7 @@
-defmodule ExAws.Cognito.IdentityProviderTest do
+defmodule ExAws.CognitoIdpTest do
   use ExUnit.Case, async: true
 
-  alias ExAws.Cognito.IdentityProvider
+  alias ExAws.CognitoIdp
 
   test "admin_create_user" do
     opts = [
@@ -11,7 +11,7 @@ defmodule ExAws.Cognito.IdentityProviderTest do
       user_attributes: [%{name: "name", value: "value"}]
     ]
 
-    operation = IdentityProvider.admin_create_user("pool", "name", opts)
+    operation = CognitoIdp.admin_create_user("pool", "name", opts)
 
     assert {"x-amz-target", "AWSCognitoIdentityProviderService.AdminCreateUser"} in operation.headers
 

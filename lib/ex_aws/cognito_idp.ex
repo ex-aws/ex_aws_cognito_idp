@@ -1,4 +1,4 @@
-defmodule ExAws.Cognito.IdentityProvider do
+defmodule ExAws.CognitoIdp do
   @moduledoc """
   AWS Cognito Identity Provider
   """
