@@ -1,9 +1,9 @@
-defmodule ExAws.Cognito.MixProject do
+defmodule ExAws.CognitoIdp.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :ex_aws_cognito,
+      app: :ex_aws_cognito_idp,
       version: "0.1.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
